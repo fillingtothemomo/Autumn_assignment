@@ -1,0 +1,30 @@
+# Python
+*.pyc
+*~
+__pycache__
+
+# Env
+.env
+myvenv/
+venv/
+
+# Ignore MySQL dump files
+*.sql
+
+# Ignore MySQL configuration files
+my.cnf
+# Static folder at project root
+/static/
+
+
+
+# Windows
+Thumbs.db*
+ehthumbs*.db
+[Dd]esktop.ini
+$RECYCLE.BIN/
+
+# Visual Studio
+.vscode/
+.history/
+*.code-workspace
