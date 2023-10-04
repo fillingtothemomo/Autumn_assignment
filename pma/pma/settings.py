@@ -79,7 +79,7 @@ WSGI_APPLICATION = 'pma.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'pma',
+        'NAME': 'protrack1',
         'USER': 'root',
         'PASSWORD': 'Angel@2004',
         'HOST':'localhost',

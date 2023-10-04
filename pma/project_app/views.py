@@ -11,6 +11,7 @@ from rest_framework import viewsets
 from .serializers import *
 from rest_framework.decorators import action
 from rest_framework import status
+from django.shortcuts import render
 
 # def auth(name,email,year):
 #     try:
@@ -96,8 +97,11 @@ class ProjectViewSet(viewsets.ModelViewSet):
     queryset=Project.objects.all()  
     serializer_class=ProjectSerializer
 
+
+
+
     @action(detail=True, methods=['POST'])
-    def addMember(self,request,pk=None):
+    def addMember(self,request,pk=None,name=None):
         project=self.get_object()
         name=request.data.get('name')
 
@@ -117,7 +121,7 @@ class ListViewSet(viewsets.ModelViewSet):
     serializer_class=ListSerializer
 
     @action(detail=True,methods=['POST'])
-    def addProject(self,request,pk=None):
+    def addProject(self,request,pk=None,name=None):
         list=self.get_object()
         name=request.data.get('name')
 
@@ -137,7 +141,7 @@ class CardViewSet(viewsets.ModelViewSet):
     serializer_class=CardSerializer
     
     @action(detail=True,methods=['POST'])
-    def addList(self,request,pk=None):
+    def addList(self,request,pk=None,name=None):
         card=self.get_object()
         name=request.data.get('name')
 
@@ -157,7 +161,7 @@ class CommentViewSet(viewsets.ModelViewSet):
     serializer_class=CommentSerializer
     
     @action(detail=True,methods=['POST'])
-    def addcard(self,request,pk=None):
+    def addcard(self,request,pk=None,name=None):
         comment=self.get_object()
         title=request.data.get('title')
 
@@ -173,7 +177,7 @@ class CommentViewSet(viewsets.ModelViewSet):
             return Response({'detail': f'{title} is already a card of the comment'}, status=status.HTTP_400_BAD_REQUEST)            
 
     @action(detail=True, methods=['POST'])
-    def add_sender(self, request, pk=None):
+    def add_sender(self, request, pk=None,name=None):
         comment = self.get_object()
         sender_name = request.data.get('sender_name')  
 
@@ -184,3 +188,4 @@ class CommentViewSet(viewsets.ModelViewSet):
 
         comment.senders.add(sender)
         return Response({'detail': f'{sender_name} assigned as a sender to the comment'}, status=status.HTTP_200_OK)                  
+    
