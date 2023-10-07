@@ -1,6 +1,7 @@
 from rest_framework import serializers
 from .models import User,Project,List,Card,Comment,Attachment
-
+from django_elasticsearch_dsl_drf.serializers import DocumentSerializer
+from .documents import CardDocument
 class UserSerializer(serializers.ModelSerializer):
    class Meta:
      model=User
@@ -30,4 +31,13 @@ class CommentSerializer(serializers.ModelSerializer):
       model=Comment
       fields='__all__' 
 
-
+class CardDocumentSerializer(DocumentSerializer):
+   class Meta:
+      model=Card
+      document=CardDocument
+      fields="__all__"
+      def get_location(self,obj):
+         try:
+            return obj.location.to_dict()
+         except:
+            return()

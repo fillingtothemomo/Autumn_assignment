@@ -16,7 +16,11 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import path,include
 
+from project_app.views import CardDocumentView
+
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('project_app/', include('project_app.urls')),
+    path('search/',CardDocumentView.as_view({'get':'list'}))
+
 ]

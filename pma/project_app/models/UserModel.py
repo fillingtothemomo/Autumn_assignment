@@ -8,6 +8,8 @@ from django.utils.translation import ugettext_lazy as _
 class User(AbstractUser):
       name = models.CharField(max_length = 50, blank = True, null = True)
       email = models.EmailField(_('email address'), unique = True, default='DEFAULT')
+      year=models.IntegerField
+      enrollment_no=models.IntegerField
       is_admin=models.BooleanField()
       prof_pic=models.ImageField(null=True)
       USERNAME_FIELD = 'email'

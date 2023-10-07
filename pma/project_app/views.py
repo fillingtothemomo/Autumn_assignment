@@ -1,8 +1,8 @@
 
 from django.shortcuts import redirect
+from project_app.api.permissions import IsAdminOrReadOnly
 from project_app.models import *
 from rest_framework.decorators import api_view, authentication_classes, permission_classes
-from .credentials import CLIENT_ID,CLIENT_SECRET,REDIRECT_URI
 import requests
 from rest_framework.decorators import api_view, authentication_classes, permission_classes
 from rest_framework.response import Response
@@ -12,102 +12,76 @@ from .serializers import *
 from rest_framework.decorators import action
 from rest_framework import status
 from django.shortcuts import render
+from rest_framework.permissions import IsAuthenticated
+from django_elasticsearch_dsl_drf.viewsets import DocumentViewSet
+from django_elasticsearch_dsl_drf.filter_backends import(CompoundSearchFilterBackend,FilteringFilterBackend)
+CLIENT_ID="96sBK49wdP0wMocpEHhp4GqOPD8vUdytDqWojUIZ"
+CLIENT_SECRET="SczIB8HE425u07XIDciCK2PIyL8m6YlRAAJvk6ShLcbWrWGyG3Jlt90KqYDUHbzQMNRzOVi6nvNA3fj1cTdYqQROxAs8gITHo1T4R85a8GzrN8Hv8dU4T9d1uCk4QTia"
+REDIRECT_URI="http://127.0.0.1:8000/project_app/login/"
 
-# def auth(name,email,year):
-#     try:
-#         user=User.objects.get(name=name)
-#         return user
-#     except User.DoesNotExist:
-#         User.objects.create(name=name, email=email,
-#                                year=year)
-#         user = User.objects.get(name=name)
 
-# def get_user(name):
-#     try:
-#         return User.objects.get(name=name)
-#     except User.DoesNotExist:
-#         return None        
-    
-# @api_view(('GET',))
-# @authentication_classes([])
-# @permission_classes([])
-# def login_redirect(request):
-#     SITE = f'https://channeli.in/oauth/authorise/?client_id={CLIENT_ID}&redirect_uri={REDIRECT_URI}get_oauth_token/'
-#     return redirect(SITE)    
+@api_view(('GET',))
+def login_redirect(request):
+    SITE = f'https://channeli.in/oauth/authorise/?client_id={CLIENT_ID}'
+    return redirect(SITE)    
 
-# @api_view(('GET', 'POST'))
-# @authentication_classes([])
-# @permission_classes([])
-# def get_token(request):
-#     AUTHORISATION_CODE = request.GET.get('code', '')
-#     post_data = {
-#         "client_id": CLIENT_ID,
-#         "client_secret": CLIENT_SECRET,
-#         "grant_type": "authorization_code",
-#         "redirect_uri": f"{REDIRECT_URI}get_oauth_token/",
-#         "code": AUTHORISATION_CODE,
-#     }
-#     response = requests.post('https://channeli.in/open_auth/token/', post_data)
 
-#     ACCESS_TOKEN = response.json().get('access_token', '')
-#     TOKEN_TYPE = response.json().get('token_type', '')
-#     REFRESh_TOKEN = response.json().get('refresh_token', '')
-#     authorization_data = {
-#         "Authorization": f"{TOKEN_TYPE} {ACCESS_TOKEN}"
-#     }
-     
-#     response = requests.get(
-#         'https://channeli.in/open_auth/get_user_data/', headers=authorization_data)
-#     print(response.json())
-#     is_member = False
-#     name = response.json()['person']['fullName']
-#     year = response.json()['student']['currentYear']
-#     email = response.json()['contactInformation']['emailAddress']
-    
-#     for role in response.json()['person']['roles']:
-#         if (role['role'] == "Maintainer"):
-#             is_member = True
-#     if is_member:
-#         try:
-#             user = auth( name=name, year=year,
-#                         email=email)
-#         except:
-#             return Response("unable to create user")
-#         try:
-#             login(request, user)
-#         except:
-#             return Response("unable to log in successfully")
-#     else:
-#         return Response("You are not a member of IMG")
-
-#     return redirect(f'{REDIRECT_URI}dashboard')
- 
-# @api_view(('GET'))
-# def logout_user(request):
-#       if request.user.is_authenticated:
-#         logout(request)
-#         return Response("user logged out Successfully")  
      
 
 class UserViewSet(viewsets.ModelViewSet):
+    permission_classes = []
     queryset=User.objects.all()
     serializer_class=UserSerializer
 
+
+    @action(methods=['POST'],detail=True)
+    def disable_user(self,request):
+        name=request.data.get('name')
+        try:
+            user_to_disable=User.objects.get(name=name)
+        except: return Response({'detail': f'User with name {name} does not exist.'}, status=status.HTTP_404_NOT_FOUND)
+        if user_to_disable.is_disabled==False:
+             user_to_disable.is_disabled=True
+             return Response({'detail': f'{name} is disabled successfully'}, status=status.HTTP_400_BAD_REQUEST)
+
+        else :
+         return Response({'detail': f'{name} is already disabled'}, status=status.HTTP_400_BAD_REQUEST)
+ 
+
 class ProjectViewSet(viewsets.ModelViewSet):
+    # permission_classes = [IsAuthenticated]
+
     queryset=Project.objects.all()  
     serializer_class=ProjectSerializer
 
 
+   
 
+    def update(self, request, pk=None):
+        pass
 
-    @action(detail=True, methods=['POST'])
-    def addMember(self,request,pk=None,name=None):
+    def destroy(self, request, pk=None):
+        pass
+    
+    # @action(methods=['POST'], detail=False)
+    # def create_project(self, request):
+    #     user = request.user
+    #     serializer = ProjectSerializer(data=request.data)
+    #     if serializer.is_valid():
+    #         user.is_admin=True
+    #         project = serializer.save()
+    #         return Response({'detail': 'Project created successfully.', 'project_id': project.id}, status=status.HTTP_201_CREATED)
+    #     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    @action(methods=['POST'],detail=True)
+    def addMember(self,request,pk=None):
         project=self.get_object()
         name=request.data.get('name')
 
         try:
             user_to_add=User.objects.get(name=name)
-        except: User.DoesNotExist
+        except: return Response({'detail': f'User with name {name} does not exist.'}, status=status.HTTP_404_NOT_FOUND)
+
     
         if user_to_add not in project.members.all():
             project.members.add(user_to_add)
@@ -115,31 +89,68 @@ class ProjectViewSet(viewsets.ModelViewSet):
 
         else:
             return Response({'detail': f'{name} is already a member of the project'}, status=status.HTTP_400_BAD_REQUEST)
+        
+    @action(methods=['POST'],detail=True,permission_classes=[IsAdminOrReadOnly])
+    def addAdmin(self,request,pk=None):
+        project=self.get_object()
+        name=request.data.get('name')
+
+        try:
+            make_admin=project.members.get(name=name)
+        except: return Response({'detail': f'User with name {name} not a member of the project.'}, status=status.HTTP_404_NOT_FOUND)
+
     
+        if make_admin.is_admin==False:
+            make_admin.is_admin=True
+            return Response({'detail': f'{name} made admin'}, status=status.HTTP_200_OK)
+
+        else:
+            return Response({'detail': f'{name} is already an admin of the project'}, status=status.HTTP_400_BAD_REQUEST)
+        
+        
+    
+
 class ListViewSet(viewsets.ModelViewSet):
+    # permission_classes = [IsAuthenticated]
+
     queryset=List.objects.all()
     serializer_class=ListSerializer
+   
+    def update(self, request, pk=None):
+        pass
 
+    def destroy(self, request, pk=None):
+        pass
     @action(detail=True,methods=['POST'])
     def addProject(self,request,pk=None,name=None):
-        list=self.get_object()
+        list1=self.get_object()
         name=request.data.get('name')
 
         try:
             project_to_add=Project.objects.get(name=name)
-        except: Project.DoesNotExist
+        except: return Response({'detail': f'Project with name {name} does not exist.'}, status=status.HTTP_404_NOT_FOUND)
 
-        if project_to_add not in list.projects.all():
-            list.projects.add(project_to_add)   
+        if project_to_add not in list1.projects.all():
+            list1.projects.add(project_to_add)   
             return Response({'detail': f'{name} added to the list'}, status=status.HTTP_200_OK)
         
         else:
             return Response({'detail': f'{name} is already a project of the list'}, status=status.HTTP_400_BAD_REQUEST)
         
 class CardViewSet(viewsets.ModelViewSet):
+    # permission_classes = [IsAuthenticated]
+
     queryset=Card.objects.all()
     serializer_class=CardSerializer
     
+    
+
+    def update(self, request, pk=None):
+        pass
+
+    def destroy(self, request, pk=None):
+        pass
+
     @action(detail=True,methods=['POST'])
     def addList(self,request,pk=None,name=None):
         card=self.get_object()
@@ -147,9 +158,9 @@ class CardViewSet(viewsets.ModelViewSet):
 
         try:
             list_to_add=List.objects.get(name=name)
-        except: List.DoesNotExist
+        except: return Response({'detail': f'List with name {name} does not exist.'}, status=status.HTTP_404_NOT_FOUND)
 
-        if list_to_add not in Card.list.all():
+        if list_to_add not in card.lists.all():
             card.projects.add(list_to_add)   
             return Response({'detail': f'{name} added to the card'}, status=status.HTTP_200_OK)
         
@@ -157,8 +168,19 @@ class CardViewSet(viewsets.ModelViewSet):
             return Response({'detail': f'{name} is already a list of the card'}, status=status.HTTP_400_BAD_REQUEST)
 
 class CommentViewSet(viewsets.ModelViewSet):
+    # permission_classes = []
+
     queryset=Comment.objects.all()
     serializer_class=CommentSerializer
+
+    def create(self, request):
+        pass
+
+    def update(self, request, pk=None):
+        pass
+
+    def destroy(self, request, pk=None):
+        pass
     
     @action(detail=True,methods=['POST'])
     def addcard(self,request,pk=None,name=None):
@@ -167,7 +189,7 @@ class CommentViewSet(viewsets.ModelViewSet):
 
         try:
             card_to_add=List.objects.get(title=title)
-        except: Card.DoesNotExist
+        except: return Response({'detail': f'Card with name {title} does not exist.'}, status=status.HTTP_404_NOT_FOUND)
 
         if card_to_add not in comment.card.all():
             comment.projects.add(card_to_add)   
@@ -183,9 +205,22 @@ class CommentViewSet(viewsets.ModelViewSet):
 
         try:
             sender = User.objects.get(name=sender_name)
-        except User.DoesNotExist:
-            return Response({'detail': f'User with username "{sender_name}" not found'}, status=status.HTTP_404_NOT_FOUND)
+        except :return Response({'detail': f'User with username "{sender_name}" not found'}, status=status.HTTP_404_NOT_FOUND)
 
         comment.senders.add(sender)
         return Response({'detail': f'{sender_name} assigned as a sender to the comment'}, status=status.HTTP_200_OK)                  
     
+class CardDocumentView(DocumentViewSet):
+    document=CardDocument
+    serializer_class=CardDocumentSerializer
+
+    filter_backends=[
+        FilteringFilterBackend,
+        CompoundSearchFilterBackend
+    ]
+    search_fields=('title','desc')
+    multi_match_search_fields=('title','desc')
+    fields_fields={
+        'title':'title',
+        'desc':'desc'
+    }
