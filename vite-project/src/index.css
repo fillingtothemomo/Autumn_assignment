@@ -1,0 +1,9 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer components{
+    .sidebar-card{
+        @apply relative flex items-center hover:bg-gray-500 text-3xl font-calibri justify-center mb-4 border-b-2 ;
+    }
+}

@@ -10,6 +10,7 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/3.2/ref/settings/
 """
 
+import os
 from pathlib import Path
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -42,11 +43,13 @@ INSTALLED_APPS = [
     # 'search.apps.SearchConfig',
     'django_elasticsearch_dsl',
     'django_elasticsearch_dsl_drf',
+    'corsheaders',
 ]
 
 ELASTICSEARCH_DSL={
     'default':{
-        "hosts":"localhost:9200"
+        "hosts":"localhost:9200",
+        "timeout":600,
     }
 }
 
@@ -58,6 +61,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'corsheaders.middleware.CorsMiddleware',
 ]
 
 ROOT_URLCONF = 'pma.urls'
@@ -65,7 +69,7 @@ ROOT_URLCONF = 'pma.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
+        'DIRS': [os.path.join(BASE_DIR,'reactapp/build')],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -95,8 +99,10 @@ DATABASES = {
         'PORT':'3306',
     }
 }
-
-
+CORS_ALLOW_ALL_ORIGINS = True
+CORS_ORIGIN_WHITELIST = [
+    "http://localhost:5173",  # React app's address
+]
 # Password validation
 # https://docs.djangoproject.com/en/3.2/ref/settings/#auth-password-validators
 
@@ -136,6 +142,9 @@ USE_TZ = True
 
 STATIC_URL = '/static/'
 
+STATICFILES_DIRS=[
+    os.path.join(BASE_DIR,'reactapp/build/static')
+]
 # Default primary key field type
 # https://docs.djangoproject.com/en/3.2/ref/settings/#default-auto-field
 

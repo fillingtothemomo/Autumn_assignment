@@ -15,12 +15,13 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path,include
-
+from . import views
 from project_app.views import CardDocumentView
 
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('project_app/', include('project_app.urls')),
-    path('search/',CardDocumentView.as_view({'get':'list'}))
+    path('search/',CardDocumentView.as_view({'get':'list'})),
+    path('',views.index,name='index')
 
 ]

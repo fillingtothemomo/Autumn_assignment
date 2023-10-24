@@ -1,28 +1,38 @@
 from django_elasticsearch_dsl import Document, fields, Index
 from django_elasticsearch_dsl.registries import registry
-from .models import Card  # Import the Card model from the appropriate location
+from .models.CardModel import Card  # Import the Card model from the appropriate location
 
-@registry.register_document
+PUBLISHER_INDEX=Index('card_index')
+PUBLISHER_INDEX.settings(
+    number_of_shards= 1,
+    number_of_replicas= 1
+)
+@PUBLISHER_INDEX.doc_type
+
 class CardDocument(Document):
-    title = fields.TextField(
+   
+   title = fields.TextField(
         fields={
-            'raw': fields.KeywordField(),
-            'suggest': fields.CompletionField(),
+            'raw': {
+               "type":'keyword'
+            }
+            
         }
     )
-
-    desc = fields.TextField(
+   desc = fields.TextField(
         fields={
-            'raw': fields.KeywordField(),
+            'raw': {
+               "type":'keyword'
+            }
+            
         }
     )
+   class Django(object):
+      model=Card
 
-    class Index:
-        name = 'card_index'
-        settings = {
-            'number_of_shards': 1,
-            'number_of_replicas': 0,
-        }  
 
-    class Django:
-        model = Card  # Link the CardDocument to your Card model
+  
+    
+
+
+   
