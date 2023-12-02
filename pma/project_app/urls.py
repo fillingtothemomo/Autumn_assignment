@@ -16,6 +16,12 @@ urlpatterns = [
     path('get_oauth_token/', new_token),
     path('send_token_request/', login_redirect),
     path('logout_user/', logout_user),
+    path('projects/create/',create_project),
+    path('create_list/',create_list),
+    path('create_card/',create_card),
+    path('create_comment/',create_comment),
+
+
 
 
 ]

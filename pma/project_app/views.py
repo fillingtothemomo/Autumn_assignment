@@ -20,7 +20,7 @@ CLIENT_SECRET="SczIB8HE425u07XIDciCK2PIyL8m6YlRAAJvk6ShLcbWrWGyG3Jlt90KqYDUHbzQM
 REDIRECT_URI="http://127.0.0.1:8000/project_app/get_oauth_token/"
 
 
-def auth(name,email):
+def auth(name,email,enrollment_no):
     try:
         user = User.objects.get(name=name)
         print("poopoo")
@@ -28,7 +28,7 @@ def auth(name,email):
 
     except:
         print("tootot")
-        User.objects.create(name=name,email=email)
+        User.objects.create(name=name,email=email,enrollment_no=enrollment_no)
         print("poopoo1")
 
         user = User.objects.get(name=name)
@@ -41,6 +41,7 @@ def get_user(name):
     except User.DoesNotExist:
         return None
     
+
 @api_view(('GET',))
 def login_redirect(request):
     SITE = f'https://channeli.in/oauth/authorise/?client_id={CLIENT_ID}'
@@ -75,14 +76,15 @@ def new_token(request):
     is_member = False
     name = response.json()['person']['fullName']
     email = response.json()['contactInformation']['emailAddress']
-
+    enrollment_no=response.json()['student']['enrolmentNumber']
+    # prof_pic=response.json()['person']['displayPicture']
     for role in response.json()['person']['roles']:
         if (role['role'] == "Maintainer"):
             is_member = True
 
     if is_member:
         try:
-            user = auth(name=name,email=email)
+            user = auth(name=name,email=email,enrollment_no=enrollment_no)
             print("hello")
             user.save()
         except:
@@ -97,7 +99,7 @@ def new_token(request):
     else:
         return Response("You are not a member of IMG")
 
-    return redirect("/project_app/login")
+    return redirect("http://localhost:5173/home/")
 
 @api_view(('GET',))
 def logout_user(request):
@@ -108,10 +110,11 @@ def logout_user(request):
      
 
 class UserViewSet(viewsets.ModelViewSet):
-    permission_classes = [IsAuthenticated]
+    # permission_classes = [IsAuthenticated]
     queryset=User.objects.all()
+    print("herllo")
     serializer_class=UserSerializer
-
+    
 
     @action(methods=['POST'],detail=True)
     def disable_user(self,request):
@@ -126,6 +129,8 @@ class UserViewSet(viewsets.ModelViewSet):
         else :
          return Response({'detail': f'{name} is already disabled'}, status=status.HTTP_400_BAD_REQUEST)
  
+ 
+
 
 class ProjectViewSet(viewsets.ModelViewSet):
 
@@ -135,21 +140,16 @@ class ProjectViewSet(viewsets.ModelViewSet):
 
    
 
-    def update(self, request, pk=None):
-        pass
-
-    def destroy(self, request, pk=None):
-        pass
     
-    # @action(methods=['POST'], detail=False)
-    # def create_project(self, request):
-    #     user = request.user
-    #     serializer = ProjectSerializer(data=request.data)
-    #     if serializer.is_valid():
-    #         user.is_admin=True
-    #         project = serializer.save()
-    #         return Response({'detail': 'Project created successfully.', 'project_id': project.id}, status=status.HTTP_201_CREATED)
-    #     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+@api_view(['POST'])
+def create_project(request):
+    if request.method == 'POST':
+        serializer = ProjectSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     @action(methods=['POST'],detail=True)
     def addMember(self,request,pk=None):
@@ -201,14 +201,18 @@ class ListViewSet(viewsets.ModelViewSet):
             return List.objects.filter(projects=project_id)
 
         return super(ListViewSet, self).get_queryset()
-    def update(self, request, pk=None):
-        pass
 
-    def destroy(self, request, pk=None):
-        pass
-
-
-
+@api_view(['POST'])
+def create_list(request):
+    if request.method == 'POST':
+        serializer = ListSerializer(data=request.data)
+        print('hello5')
+        if serializer.is_valid():
+            print('hello6')
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+   
 
     @action(detail=True,methods=['POST'])
     def addProject(self,request,pk=None,name=None):
@@ -237,12 +241,11 @@ class CardViewSet(viewsets.ModelViewSet):
 
         if list_id:
             return Card.objects.filter(lists=list_id)
+        else:
+            return Card.objects.all()
 
-    def update(self, request, pk=None):
-        pass
+   
 
-    def destroy(self, request, pk=None):
-        pass
 
     @action(detail=True,methods=['POST'])
     def addList(self,request,pk=None,name=None):
@@ -259,12 +262,28 @@ class CardViewSet(viewsets.ModelViewSet):
         
         else:
             return Response({'detail': f'{name} is already a list of the card'}, status=status.HTTP_400_BAD_REQUEST)
+@api_view(['POST'])
+def create_card(request):
+    if request.method == 'POST':
+        serializer = CardSerializer(data=request.data)
+        print('hello5')
+        if serializer.is_valid():
+            print('hello6')
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)        
 
 class CommentViewSet(viewsets.ModelViewSet):
     # permission_classes = []
-
     queryset=Comment.objects.all()
     serializer_class=CommentSerializer
+    def get_queryset(self):
+        card_id = self.request.query_params.get('card_id')
+
+        if card_id:
+            return Comment.objects.filter(card=card_id)
+        else:
+            return Comment.objects.all()
 
     def create(self, request):
         pass
@@ -290,9 +309,19 @@ class CommentViewSet(viewsets.ModelViewSet):
         
         else:
             return Response({'detail': f'{title} is already a card of the comment'}, status=status.HTTP_400_BAD_REQUEST)            
-
-    @action(detail=True, methods=['POST'])
-    def add_sender(self, request, pk=None,name=None):
+@api_view(['POST'])
+def create_comment(request):
+    if request.method == 'POST':
+        serializer = CommentSerializer(data=request.data)
+        print('hello5')
+        if serializer.is_valid():
+            print('hello6')
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST) 
+       
+@action(detail=True, methods=['POST'])
+def add_sender(self, request, pk=None,name=None):
         comment = self.get_object()
         sender_name = request.data.get('sender_name')  
 

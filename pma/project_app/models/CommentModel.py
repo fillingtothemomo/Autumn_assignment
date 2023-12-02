@@ -4,7 +4,7 @@ from .UserModel import User
 
 class Comment(models.Model):
     desc=models.TextField(max_length=200)
-    time=models.TimeField(auto_now_add=True)
+    time=models.TimeField()
     card=models.ForeignKey("Card", on_delete=models.CASCADE)
     sender=models.ManyToManyField(User)
     def __str__(self):

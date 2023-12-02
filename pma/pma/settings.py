@@ -36,24 +36,26 @@ INSTALLED_APPS = [
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
+        'corsheaders',
+
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'project_app',
     'rest_framework',
-    # 'search.apps.SearchConfig',
     'django_elasticsearch_dsl',
     'django_elasticsearch_dsl_drf',
-    'corsheaders',
 ]
 
 ELASTICSEARCH_DSL={
     'default':{
-        "hosts":"localhost:9200",
+        "hosts":"http://localhost:9200",
         "timeout":600,
     }
 }
 
 MIDDLEWARE = [
+        'corsheaders.middleware.CorsMiddleware',
+
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -61,7 +63,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    'corsheaders.middleware.CorsMiddleware',
+
 ]
 
 ROOT_URLCONF = 'pma.urls'
@@ -82,7 +84,6 @@ TEMPLATES = [
     },
 ]
 
-WSGI_APPLICATION = 'pma.wsgi.application'
 
 
 # Database
@@ -100,9 +101,20 @@ DATABASES = {
     }
 }
 CORS_ALLOW_ALL_ORIGINS = True
-CORS_ORIGIN_WHITELIST = [
-    "http://localhost:5173",  # React app's address
+CORS_ALLOWED_ORIGINS = [
+    "http://localhost:5173",  # Add your React app's address
 ]
+CORS_ALLOW_METHODS = [
+    'DELETE',
+    'GET',
+    'OPTIONS',
+    'PATCH',
+    'POST',
+    'PUT',
+]
+
+
+
 # Password validation
 # https://docs.djangoproject.com/en/3.2/ref/settings/#auth-password-validators
 
@@ -141,6 +153,7 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/3.2/howto/static-files/
 
 STATIC_URL = '/static/'
+WSGI_APPLICATION='pma.wsgi.application'
 
 STATICFILES_DIRS=[
     os.path.join(BASE_DIR,'reactapp/build/static')
