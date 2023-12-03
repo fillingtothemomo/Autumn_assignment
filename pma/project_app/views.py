@@ -11,6 +11,7 @@ from rest_framework import viewsets
 from .serializers import *
 from rest_framework.decorators import action
 from rest_framework import status
+
 from django.shortcuts import render
 from rest_framework.permissions import IsAuthenticated
 from django_elasticsearch_dsl_drf.viewsets import DocumentViewSet
@@ -87,6 +88,7 @@ def new_token(request):
             user = auth(name=name,email=email,enrollment_no=enrollment_no)
             print("hello")
             user.save()
+            print(user.is_authenticated)
         except:
             return Response("Unable to create user")
 
@@ -110,7 +112,6 @@ def logout_user(request):
      
 
 class UserViewSet(viewsets.ModelViewSet):
-    # permission_classes = [IsAuthenticated]
     queryset=User.objects.all()
     print("herllo")
     serializer_class=UserSerializer
@@ -133,6 +134,7 @@ class UserViewSet(viewsets.ModelViewSet):
 
 
 class ProjectViewSet(viewsets.ModelViewSet):
+    permission_classes([IsAuthenticated])
 
     queryset=Project.objects.all()  
     serializer_class=ProjectSerializer
@@ -189,7 +191,6 @@ def create_project(request):
     
 
 class ListViewSet(viewsets.ModelViewSet):
-    # permission_classes = [IsAuthenticated]
 
     queryset=List.objects.all()
     serializer_class=ListSerializer
@@ -202,17 +203,15 @@ class ListViewSet(viewsets.ModelViewSet):
 
         return super(ListViewSet, self).get_queryset()
 
+
 @api_view(['POST'])
 def create_list(request):
     if request.method == 'POST':
         serializer = ListSerializer(data=request.data)
-        print('hello5')
         if serializer.is_valid():
-            print('hello6')
             serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-   
 
     @action(detail=True,methods=['POST'])
     def addProject(self,request,pk=None,name=None):
@@ -231,7 +230,7 @@ def create_list(request):
             return Response({'detail': f'{name} is already a project of the list'}, status=status.HTTP_400_BAD_REQUEST)
         
 class CardViewSet(viewsets.ModelViewSet):
-    # permission_classes = [IsAuthenticated]
+    permission_classes([IsAuthenticated])
 
     queryset=Card.objects.all()
     serializer_class=CardSerializer
@@ -274,7 +273,7 @@ def create_card(request):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)        
 
 class CommentViewSet(viewsets.ModelViewSet):
-    # permission_classes = []
+    permission_classes = []
     queryset=Comment.objects.all()
     serializer_class=CommentSerializer
     def get_queryset(self):

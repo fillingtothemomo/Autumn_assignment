@@ -160,11 +160,13 @@ const Project = () => {
       const handleCreateComment=(sourceCardId:number)=>{
         const current = new Date();
 
-        const time = current.toLocaleTimeString("en-US", {
-          hour: "2-digit",
-          minute: "2-digit",
+        const hours = String(current.getHours()).padStart(2, '0');
+        const minutes = String(current.getMinutes()).padStart(2, '0');
+        const seconds = String(current.getSeconds()).padStart(2, '0');
+        
+        const time = `${hours}:${minutes}:${seconds}`;
           
-        })
+        
         console.log(time);  
         const data={
           
@@ -189,22 +191,22 @@ const Project = () => {
        
       
         }
-        socketRef.current=new WebSocket(
+      //   socketRef.current=new WebSocket(
         
         
-        'ws://127.0.0.1:8000/')
-        socketRef.current.onopen= e => {
-         console.log('open',e)
-        }
-        socketRef.current.onmessage = (event) => {
-          const eventData = JSON.parse(event.data);
-          handleCreateComment(eventData.source_card_id);
-      };
+      //   'ws://127.0.0.1:8000/')
+      //   socketRef.current.onopen= e => {
+      //    console.log('open',e)
+      //   }
+      //   socketRef.current.onmessage = (event) => {
+      //     const eventData = JSON.parse(event.data);
+      //     handleCreateComment(eventData.source_card_id);
+      // };
       
      
-        socketRef.current.onerror = (event) => {
-          console.error('WebSocket Error:', event);
-      };
+      //   socketRef.current.onerror = (event) => {
+      //     console.error('WebSocket Error:', event);
+      // };
     const handleIconClick2 = (sourceCardId:number) => {
           axios
             .get(`http://127.0.0.1:8000/project_app/comments/?card_id=${sourceCardId}`)

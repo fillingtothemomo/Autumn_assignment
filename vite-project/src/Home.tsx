@@ -7,34 +7,63 @@ interface CardData {
   card: string;
 }
 function Home() {
- const [userData,setUserData]=useState();
-  const [cards, setCards] = useState< CardData[]>([]);
+  const [userData, setUserData] = useState();
+  const [cards, setCards] = useState<CardData[]>([]);
+  const [authorizationCode, setAuthorizationCode] = useState('');
 
-  useEffect(()=>{
-    axios.get('http://127.0.0.1:8000/project_app/login/').then((response)=>{
-      setUserData(response.data);
-      console.log(userData);
-      console.log(response.data);
-    }).catch((error)=>{
-      console.error('hehe',error);
-    });
-  
- 
-    axios.get('http://127.0.0.1:8000/project_app/cards/')
-      .then((response) => {
-        setCards(response.data);
-      })
-      .catch((error) => {
-        console.error('Error fetching cards data', error);
-      });
+  useEffect(() => {
+    // Function to fetch authorization code
+    const fetchAuthorizationCode = async () => {
+      try {
+        const response = await axios.get('http://127.0.0.1:8000/project_app/send_token_request/');
+        // Assuming the response contains the authorization code
+        const code = response.data.code;
+        setAuthorizationCode(code);
+        // You can perform additional actions with the obtained authorization code here
+        console.log('Authorization Code:', code);
+      } catch (error) {
+        console.error('Error fetching authorization code', error);
+      }
+    };
+
+    // Call the function when the component mounts
+    fetchAuthorizationCode();
   }, []);
 
   useEffect(() => {
-    console.log('userData:', userData);
+    // Function to fetch user data
+    const fetchUserData = async () => {
+      try {
+        const response = await axios.get('http://127.0.0.1:8000/project_app/login/', {
+          headers: {
+            Authorization: `Bearer ${authorizationCode}`, // Replace with your actual authorization code
+          },
+        });
+        setUserData(response.data);
+        console.log(response.data);
+      } catch (error) {
+        console.error('Error fetching user data', error);
+      }
+    };
 
+    // Function to fetch cards data
+    const fetchCardsData = async () => {
+      try {
+        const response = await axios.get('http://127.0.0.1:8000/project_app/cards/', {
+          headers: {
+            Authorization: `Bearer ${authorizationCode}`, // Replace with your actual authorization code
+          },
+        });
+        setCards(response.data);
+      } catch (error) {
+        console.error('Error fetching cards data', error);
+      }
+    };
 
-  }, [userData]); // This effect runs whenever userData changes
-  
+    // Call the functions when the component mounts
+    fetchUserData();
+    fetchCardsData();
+  }, [authorizationCode]);
   return (
     <div string-name='home' className="w-full h-screen bg-slate-600">
       <div className="flex flex-row ml-56 mb-20 ">
