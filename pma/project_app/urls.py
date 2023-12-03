@@ -20,7 +20,7 @@ urlpatterns = [
     path('create_list/',create_list),
     path('create_card/',create_card),
     path('create_comment/',create_comment),
-
+    path('add_members/<int:project_id>/', addMember, name='add_members'),
 
 
 

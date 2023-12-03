@@ -1,5 +1,5 @@
 
-from django.shortcuts import redirect
+from django.shortcuts import get_object_or_404, redirect
 from project_app.api.permissions import IsAdminOrReadOnly
 from project_app.models import *
 from rest_framework.decorators import api_view, authentication_classes, permission_classes
@@ -153,25 +153,26 @@ def create_project(request):
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-    @action(methods=['POST'],detail=True)
-    def addMember(self,request,pk=None):
-        project=self.get_object()
-        name=request.data.get('name')
-
-        try:
-            user_to_add=User.objects.get(name=name)
-        except: return Response({'detail': f'User with name {name} does not exist.'}, status=status.HTTP_404_NOT_FOUND)
-
+@api_view(['POST','PUT'])
+def addMember(request, project_id):
+    project = get_object_or_404(Project, id=project_id)
     
-        if user_to_add not in project.members.all():
-            project.members.add(user_to_add)
-            return Response({'detail': f'{name} added to the project'}, status=status.HTTP_200_OK)
+    user_ids = request.data.get('selectedMembers', [])  # Assuming 'members' is the key in your request data
 
-        else:
-            return Response({'detail': f'{name} is already a member of the project'}, status=status.HTTP_400_BAD_REQUEST)
+    for user_id in user_ids:
+        try:
+            user_to_add = User.objects.get(id=user_id)
+            if user_to_add not in project.members.all():
+                project.members.add(user_to_add)
+            else:
+                return Response({'detail': f'User with ID {user_id} is already a member of the project'}, status=status.HTTP_400_BAD_REQUEST)
+        except User.DoesNotExist:
+            return Response({'detail': f'User with ID {user_id} does not exist.'}, status=status.HTTP_404_NOT_FOUND)
+
+    return Response({'detail': 'Members added to the project successfully'}, status=status.HTTP_200_OK)
         
-    @action(methods=['POST'],detail=True,permission_classes=[IsAdminOrReadOnly])
-    def addAdmin(self,request,pk=None):
+@action(methods=['POST'],detail=True,permission_classes=[IsAdminOrReadOnly])
+def addAdmin(self,request,pk=None):
         project=self.get_object()
         name=request.data.get('name')
 

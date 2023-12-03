@@ -13,6 +13,7 @@ const Project = () => {
   const [isCreateCardVisibleMap, setCreateCardVisibleMap] = useState<{ [listId: string]: boolean }>({});
   const [userData, setUserData] = useState([]);
   const [key, setKey] = useState(0);
+
     const [rerender, setRerender] = useState(false);
   const [lists, setLists] = useState([]);
   const [cards, setCards] = useState<{ [listId: string]: any[] }>({});
@@ -27,12 +28,57 @@ const Project = () => {
   const handleIconClick = () => {
     setDialogOpen(true);
   };
-
+  const [selectedMembers, setSelectedMembers] = useState<number[]>([]);
+  const [allUsers, setAllUsers] = useState([]);
+  const [memberNames, setMemberNames] = useState<string[]>([]); // Ad
   const handleCloseDialog = () => {
     setDialogOpen(false);
   };
+  useEffect(() => {
+    // Fetch users from the backend when the component mounts
+    axios.get('http://127.0.0.1:8000/project_app/login/')
+      .then((response) => {
+        setAllUsers(response.data);
+        // Extract and set member names for dropdown
+        const names = response.data.map((user) => user.name);
+        setMemberNames(names);
+      })
+      .catch((error) => {
+        console.error('Error fetching users:', error);
+      });
+  }, []);
 
+  const handleMemberSelectionChange = (e) => {
+    const selectedUserNames = Array.from(e.target.selectedOptions, (option) => option.value);
+    const selectedUserIds = allUsers
+      .filter((user) => selectedUserNames.includes(user.name))
+      .map((user) => user.id);
+    setSelectedMembers(selectedUserIds);
+  };
 
+  const handleAddMemberClick = () => {
+    if (selectedMembers.length > 0) {
+      addMembersToProject(id, selectedMembers);
+    } else {
+      console.error('No members selected');
+    }
+  };
+  
+  const addMembersToProject = (project_id: string, selectedMembers: number[]) => {
+    const data = {
+      members: selectedMembers,
+    };
+  console.log(selectedMembers);
+    axios.post(`http://127.0.0.1:8000/project_app/add_members/${project_id}/`, data)
+      .then((response) => {
+        console.log('Members added successfully:', response.data);
+      })
+      .catch((error) => {
+        console.error('Error adding members to the project:', error);
+      });
+  };
+  
+  
   useEffect(() => {
     axios.get('http://127.0.0.1:8000/project_app/login/')
       .then((response) => {
@@ -171,7 +217,7 @@ const Project = () => {
         const data={
           
           desc:newDesc,
-          sender:['14'],
+          sender:[user.id],
           card:sourceCardId,
           time:time,
 
@@ -222,7 +268,6 @@ const Project = () => {
             });
         };
     const updateListId = (sourceListId, destinationListId, cardId) => {
-      // Fetch the existing card data first
       axios
         .get(`http://127.0.0.1:8000/project_app/cards/${cardId}`)
         .then((getResponse) => {
@@ -230,14 +275,12 @@ const Project = () => {
          console.log(destinationListId);
          console.log(sourceListId);
 
-          // Create updated data with the new list ID
           const updatedCardData = {
             ...existingCardData,
             assignees:[14],
             lists: destinationListId,
           };
     
-          // Make a PUT request to update the card
           axios
             .put(`http://127.0.0.1:8000/project_app/cards/${cardId}/`, updatedCardData)
             .then((response) => {
@@ -358,8 +401,23 @@ const handleDeleteList=(listId:number)=>{
     <>
     <div className="w-full h-screen bg-slate-600">
       <p className="ml-60 pt-12 text-white text-3xl">{name}</p>
-      <p className="ml-60 pt-12 text-white text-2xl">Members: A, B, C</p>
-      <div className='ml-60'>
+      <div className="ml-40">
+        <label htmlFor="memberDropdown">Select Members:</label>
+        <select
+          id="memberDropdown"
+          multiple
+          onChange={handleMemberSelectionChange}
+          value={memberNames} // Use member names for display
+        >
+          {allUsers.map((user) => (
+            <option key={user.id} value={user.name}>
+              {user.name}
+            </option>
+          ))}
+        </select>
+      </div>
+      <button className="ml-44" onClick={handleAddMemberClick}>Add Member</button>    
+        <div className='ml-60'>
           <input
             type="text"
             placeholder="List Name"

@@ -4,7 +4,6 @@ const LoginPage = () => {
     
 
   const handleLoginRedirect = () => {
-    // Redirect the user to the backend's login endpoint
     window.location.href = "http://127.0.0.1:8000/project_app/send_token_request/";
   };
 

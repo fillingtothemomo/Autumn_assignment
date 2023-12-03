@@ -12,26 +12,21 @@ function Home() {
   const [authorizationCode, setAuthorizationCode] = useState('');
 
   useEffect(() => {
-    // Function to fetch authorization code
     const fetchAuthorizationCode = async () => {
       try {
         const response = await axios.get('http://127.0.0.1:8000/project_app/send_token_request/');
-        // Assuming the response contains the authorization code
         const code = response.data.code;
         setAuthorizationCode(code);
-        // You can perform additional actions with the obtained authorization code here
         console.log('Authorization Code:', code);
       } catch (error) {
         console.error('Error fetching authorization code', error);
       }
     };
 
-    // Call the function when the component mounts
     fetchAuthorizationCode();
   }, []);
 
   useEffect(() => {
-    // Function to fetch user data
     const fetchUserData = async () => {
       try {
         const response = await axios.get('http://127.0.0.1:8000/project_app/login/', {
@@ -46,7 +41,6 @@ function Home() {
       }
     };
 
-    // Function to fetch cards data
     const fetchCardsData = async () => {
       try {
         const response = await axios.get('http://127.0.0.1:8000/project_app/cards/', {
@@ -60,7 +54,6 @@ function Home() {
       }
     };
 
-    // Call the functions when the component mounts
     fetchUserData();
     fetchCardsData();
   }, [authorizationCode]);
