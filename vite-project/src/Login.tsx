@@ -16,7 +16,7 @@ const LoginPage = () => {
         To access this application, please click the button below to initiate the login process.
       </p>
 
-      <button className="login-button ml-40" onClick={handleLoginRedirect}>
+      <button className="login-button ml-60" onClick={handleLoginRedirect}>
         Login
       </button>
     </div>

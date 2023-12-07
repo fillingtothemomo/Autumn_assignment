@@ -21,6 +21,7 @@ urlpatterns = [
     path('create_card/',create_card),
     path('create_comment/',create_comment),
     path('add_members/<int:project_id>/', addMember, name='add_members'),
+    path('get_project_by_name/', get_project_by_name, name='get_project_by_name'),
 
 
 

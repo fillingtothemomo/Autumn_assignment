@@ -13,7 +13,7 @@ const SideBar: React.FC = () => {
     axios.get('http://127.0.0.1:8000/project_app/logout_user/')
       .then((response) => {
         console.log('User logged out successfully');
-        window.location.href = '';
+        window.location.href = '/';
       })
       .catch((error) => {
         console.error('Error logging out user', error);

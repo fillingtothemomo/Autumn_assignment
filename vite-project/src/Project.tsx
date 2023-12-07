@@ -13,13 +13,15 @@ const Project = () => {
   const [isCreateCardVisibleMap, setCreateCardVisibleMap] = useState<{ [listId: string]: boolean }>({});
   const [userData, setUserData] = useState([]);
   const [key, setKey] = useState(0);
-
+  const[projectDesc,setProjectDesc]=useState([]);
+  const[projects,setProjects]=useState('');
     const [rerender, setRerender] = useState(false);
   const [lists, setLists] = useState([]);
   const [cards, setCards] = useState<{ [listId: string]: any[] }>({});
   const [newListName, setNewListName] = useState('');
   const [newCardName, setNewCardName] = useState('');
   const [newDesc, setNewComment] = useState('');
+  const [projectMembers, setProjectMembers] = useState([]);
   const [selectedCardComments, setSelectedCardComments] = useState([]);
   const [newCardDesc, setNewCardDesc] = useState('');
   const [comments, setComments] = useState<{ [listId: string]: any[] }>({});
@@ -103,6 +105,27 @@ const Project = () => {
     }
   
   };
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const response = await axios.get(`http://127.0.0.1:8000/project_app/get_project_by_name/?project_name=${name}`);
+        const projectDesc = response.data.desc;
+        const projectMembers=response.data.members;
+        console.log(projectDesc);
+        console.log(projectMembers);
+
+        setProjectDesc(projectDesc);
+        setProjectMembers(projectMembers);
+      } catch (error) {
+        console.error('Error fetching project data:', error);
+        console.error(error.response.data);
+        console.error(error.response.headers);
+      }
+    };
+
+    fetchData();
+  }, [name]);
   const getUserNameById = (userId:number) => {
     console.log(userData);
     const user = userData.find((user) => user.id === parseInt(userId));
@@ -217,15 +240,16 @@ const Project = () => {
         const data={
           
           desc:newDesc,
-          sender:[user.id],
+          sender:['14'],
           card:sourceCardId,
           time:time,
 
         };
+        console.log("hapi");
         axios.post('http://127.0.0.1:8000/project_app/create_comment/', data).
         then((response)=>{
     
-          const newComments = response.data; // Assuming the response contains the newly created list data
+          const newComments = response.data; 
           setComments((prevComments) => ({
             ...prevComments,
             [sourceCardId]: [...(prevComments[sourceCardId] || []), newComments],
@@ -316,6 +340,21 @@ axios.delete(`http://127.0.0.1:8000/project_app/cards/${cardId}`)
   console.error(error.response.data);
   console.error(error.response.headers);})
 }
+const handleDeleteProject=(project_id:number)=>{
+  axios.delete(`http://127.0.0.1:8000/project_app/projects/${project_id}`)
+  .then((response)=>{
+    setProjects((prevProjects)=>{
+      const updatedProjects={...prevProjects};
+      delete updatedProjects[project_id];
+      console.log('project deleted successfully:', response.data);
+      return updatedProjects;
+  
+    })
+  }).catch((error) => {
+    console.error('Error deleting card:', error);
+    console.error(error.response.data);
+    console.error(error.response.headers);})
+  }
 const handleDeleteList=(listId:number)=>{
   axios.delete(`http://127.0.0.1:8000/project_app/lists/${listId}`)
   .then((response)=>{
@@ -400,7 +439,19 @@ const handleDeleteList=(listId:number)=>{
   return (
     <>
     <div className="w-full h-screen bg-slate-600">
-      <p className="ml-60 pt-12 text-white text-3xl">{name}</p>
+      <p className="ml-60 pt-12 text-white text-3xl">{name}       <button onClick={() => handleDeleteProject(parseInt(id))}><CiTrash /></button>
+</p>
+
+      <p className="ml-60 pt-12 text-white text-3xl">{projectDesc}</p>
+      <div className="ml-60 pt-4 text-white text-3xl">
+  Project Members:
+  <ul>
+    {projectMembers.map((member) => (
+      <li key={member.id}>{getUserNameById(member.id)}</li>
+    ))}
+  </ul>
+</div>
+
       <div className="ml-40">
         <label htmlFor="memberDropdown">Select Members:</label>
         <select

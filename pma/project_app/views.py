@@ -1,4 +1,5 @@
 
+from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect
 from project_app.api.permissions import IsAdminOrReadOnly
 from project_app.models import *
@@ -141,8 +142,26 @@ class ProjectViewSet(viewsets.ModelViewSet):
 
 
    
+def get_project_by_name(request):
+    project_name = request.GET.get('project_name', '')
+    print(project_name)
+    print('yo')
+    try:
+        project = Project.objects.get(name=project_name)
 
-    
+        member_ids = list(project.members.values_list('id', flat=True)) if project.members.exists() else []
+
+        project_data = {
+            'name': project.name,
+            'desc': project.desc,
+            'members': [
+                {'id': member_id} for member_id in member_ids
+            ],
+        }
+        return JsonResponse(project_data)
+    except Project.DoesNotExist:
+        return JsonResponse({'error': 'Project not found'}, status=404)
+  
     
 @api_view(['POST'])
 def create_project(request):
