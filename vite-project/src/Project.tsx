@@ -437,7 +437,7 @@ const handleDeleteList=(listId:number)=>{
   }, [id]);
 
   return (
-    <>
+    <> 
     <div className="w-full h-screen bg-slate-600">
       <p className="ml-60 pt-12 text-white text-3xl">{name}       <button onClick={() => handleDeleteProject(parseInt(id))}><CiTrash /></button>
 </p>

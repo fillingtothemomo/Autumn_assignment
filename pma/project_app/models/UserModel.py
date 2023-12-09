@@ -16,6 +16,8 @@ class User(AbstractUser):
       enrollment_no=models.IntegerField(null=True)
       is_admin=models.BooleanField(default=False)
       prof_pic=models.ImageField(null=True)
+      is_disabled=models.BooleanField(default=False)
+
     
       USERNAME_FIELD = 'email'
       REQUIRED_FIELDS = ['name']

@@ -22,20 +22,18 @@ CLIENT_SECRET="SczIB8HE425u07XIDciCK2PIyL8m6YlRAAJvk6ShLcbWrWGyG3Jlt90KqYDUHbzQM
 REDIRECT_URI="http://127.0.0.1:8000/project_app/get_oauth_token/"
 
 
-def auth(name,email,enrollment_no):
+def auth( name, year, email, enrolment_number):
     try:
         user = User.objects.get(name=name)
-        print("poopoo")
         return user
 
-    except:
-        print("tootot")
-        User.objects.create(name=name,email=email,enrollment_no=enrollment_no)
-        print("poopoo1")
-
+    except User.DoesNotExist:
+        User.objects.create(name=name, email=email,
+                            year=year, enrolment_number=enrolment_number)
         user = User.objects.get(name=name)
+        if  year == 4:
+            user.is_admin = True
         return user
-
 
 def get_user(name):
     try:
@@ -86,17 +84,19 @@ def new_token(request):
 
     if is_member:
         try:
-            user = auth(name=name,email=email,enrollment_no=enrollment_no)
+            user = auth(name=name, email=email, enrollment_no=enrollment_no)
             print("hello")
+            
+            if user.is_disabled:
+                return Response("User account is disabled", status=status.HTTP_403_FORBIDDEN)
+            
             user.save()
             print(user.is_authenticated)
-        except:
+        except Exception as e:
             return Response("Unable to create user")
 
         try:
-            login(request, user)            
-
-           
+            login(request, user)
         except Exception as e:
             return Response("Error making POST request: " + str(e))
     else:
@@ -117,19 +117,21 @@ class UserViewSet(viewsets.ModelViewSet):
     print("herllo")
     serializer_class=UserSerializer
     
-
-    @action(methods=['POST'],detail=True)
-    def disable_user(self,request):
-        name=request.data.get('name')
+@action(methods=['POST'], detail=True, permission_classes=[IsAuthenticated, IsAdminOrReadOnly])
+def disable_user(self, request):
+        name = request.data.get('name')
         try:
-            user_to_disable=User.objects.get(name=name)
-        except: return Response({'detail': f'User with name {name} does not exist.'}, status=status.HTTP_404_NOT_FOUND)
-        if user_to_disable.is_disabled==False:
-             user_to_disable.is_disabled=True
-             return Response({'detail': f'{name} is disabled successfully'}, status=status.HTTP_400_BAD_REQUEST)
+            user_to_disable = User.objects.get(name=name)
+        except User.DoesNotExist:
+            return Response({'detail': f'User with name {name} does not exist.'}, status=status.HTTP_404_NOT_FOUND)
 
-        else :
-         return Response({'detail': f'{name} is already disabled'}, status=status.HTTP_400_BAD_REQUEST)
+        if user_to_disable.is_disabled:
+            return Response({'detail': f'{name} is already disabled'}, status=status.HTTP_400_BAD_REQUEST)
+
+        user_to_disable.is_disabled = True
+        user_to_disable.save()
+
+        return Response({'detail': f'{name} is disabled successfully'}, status=status.HTTP_200_OK)
  
  
 
@@ -173,6 +175,7 @@ def create_project(request):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 @api_view(['POST','PUT'])
+@permission_classes([IsAdminOrReadOnly])
 def addMember(request, project_id):
     project = get_object_or_404(Project, id=project_id)
     
