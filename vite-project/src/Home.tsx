@@ -24,7 +24,36 @@ function Home() {
   const handleNameChange = (event) => {
     setName(event.target.value);
   };
-
+  const handleChangeUserRole = async () => {
+    try {
+      const response = await axios.post(
+        'http://127.0.0.1:8000/project_app/users/change_user_role/',
+        { name },
+        {
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${authorizationCode}`,
+          },
+        }
+      );
+  
+      if (response.status === 200) {
+        console.log('User role changed successfully');
+        setUserData((prevUserData) => ({
+          ...prevUserData!,
+          is_admin: true,
+          name: prevUserData?.name || '', // Ensure that name is defined
+          enrollment_no: prevUserData?.enrollment_no || '', // Ensure that enrollment_no is defined
+          email: prevUserData?.email || '', // Ensure that email is defined
+        }));
+              } else {
+        console.error(`Error changing user role: ${response.data.detail}`);
+      }
+    } catch (error) {
+      console.error('Error changing user role:', error);
+    }
+  };
+  
   const handleDisableUser = async () => {
     try {
       const response = await axios.post(
@@ -37,7 +66,7 @@ function Home() {
           },
         }
       );
-
+  
       if (response.status === 200) {
         console.log('User disabled successfully');
       } else {
@@ -47,7 +76,7 @@ function Home() {
       console.error('Error disabling user:', error);
     }
   };
-
+  
   useEffect(() => {
     const fetchAuthorizationCode = async () => {
       try {
@@ -72,9 +101,9 @@ function Home() {
           },
         });
 
-        setUserData(response.data[2]);
-        setIsAdmin(response.data[2]?.is_admin || false); // Assuming the response has is_admin property
-        console.log(response.data[2]);
+        setUserData(response.data[1]);
+        setIsAdmin(response.data[1]?.is_admin || false); 
+        console.log(response.data[1]);
       } catch (error) {
         console.error('Error fetching user data', error);
       }
@@ -100,7 +129,7 @@ function Home() {
 
   return (
     <div className="w-full h-screen bg-slate-600">
-      <div className="flex flex-row ml-56 mb-20 ">
+      <div className="flex flex-row ml-60 mb-20 ">
         <img src={Pfp} className="mt-10" alt="Profile" />
         {userData ? (
           <div className="ml-20 mt-20 text-white text-xl">
@@ -130,14 +159,20 @@ function Home() {
       </div>
 
       {isAdmin && (
-        <div>
-          <label>
-            User Name:
+        <div className="mt-4 ml-52">
+          <label className="mr-2">
+           Name:
             <input type="text" value={name} onChange={handleNameChange} />
           </label>
-          <button onClick={handleDisableUser}>Disable User</button>
+          <button className="px-3 py-2 bg-blue-500 text-white rounded" onClick={handleDisableUser}>
+            Disable User
+          </button>
+          <button className="ml-2 px-3 py-2 bg-green-500 text-white rounded" onClick={handleChangeUserRole}>
+            Change User Role
+          </button>
         </div>
       )}
+    
     </div>
   );
 }

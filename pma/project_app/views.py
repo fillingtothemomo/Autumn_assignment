@@ -113,13 +113,28 @@ def logout_user(request):
      
 
 class UserViewSet(viewsets.ModelViewSet):
-    queryset=User.objects.all()
-    print("herllo")
-    serializer_class=UserSerializer
-    
-@action(methods=['POST'], detail=True, permission_classes=[IsAuthenticated, IsAdminOrReadOnly])
-def disable_user(self, request):
+    queryset = User.objects.all()
+    serializer_class = UserSerializer
+
+    @action(methods=['POST'], detail=False, permission_classes=[ IsAdminOrReadOnly])
+    def change_user_role(self, request):
         name = request.data.get('name')
+
+
+        try:
+            user_to_change = User.objects.get(name=name)
+        except User.DoesNotExist:
+            return Response({'detail': f'User with name {name} does not exist.'}, status=status.HTTP_404_NOT_FOUND)
+
+        user_to_change.is_admin = True
+        user_to_change.save()
+
+        return Response({'detail': f'{user_to_change.name} role changed to admin'}, status=status.HTTP_200_OK)
+
+    @action(methods=['POST'], detail=False, permission_classes=[ IsAdminOrReadOnly])
+    def disable_user(self, request):
+        name = request.data.get('name')
+
         try:
             user_to_disable = User.objects.get(name=name)
         except User.DoesNotExist:
@@ -132,9 +147,6 @@ def disable_user(self, request):
         user_to_disable.save()
 
         return Response({'detail': f'{name} is disabled successfully'}, status=status.HTTP_200_OK)
- 
- 
-
 
 class ProjectViewSet(viewsets.ModelViewSet):
     permission_classes([IsAuthenticated])

@@ -1,36 +1,21 @@
-from channels.consumer import AsyncConsumer
+import json
 
-class ProjectConsumer(AsyncConsumer):
-    async def websocket_connect(self, event):
-        project_room = "projectroom"
-        self.project_room = project_room
-        await self.channel_layer.group_add(
-            project_room, self.channel_name
-        )
-        await self.send({
-            "type": "websocket.accept"
-        })
+from channels.generic.websocket import AsyncWebsocketConsumer
 
-    async def websocket_receive(self, event):
-        initial_data = event.get("text", None)
-        source_card_id = event.get("source_card_id", None)
 
-        await self.channel_layer.group_send(
-        self.project_room, {
-            "type": "project_message",
-            "text": initial_data,
-            "source_card_id": source_card_id,
-        }
-    )
-    async def project_message(self, event):
-        source_card_id = event.get("source_card_id", None)
-        text = event.get("text", None)
+class ProjectConsumer(AsyncWebsocketConsumer):
+    async def connect(self):
+        if self.scope["user"].is_anonymous:
+            await self.close()
+            return
 
-        await self.send({
-        "type": "websocket.send",
-        "text": text,
-        "source_card_id": source_card_id,
-    })
+        self.user = self.scope["user"]
+        self.group_name = f"job-posting-{self.user.id}"
 
-    async def websocket_disconnect(self, event):
-        print('Disconnect', event)
+        await self.channel_layer.group_add(self.group_name, self.channel_name)
+        await self.accept()
+
+    async def propagate_status(self, event):
+        if not self.scope["user"].is_anonymous:
+            message = event["message"]
+            await self.send(text_data=json.dumps(message))

@@ -27,6 +27,7 @@ const Project = () => {
   const [comments, setComments] = useState<{ [listId: string]: any[] }>({});
   const [isDialogOpen, setDialogOpen] = useState(false);
   const socketRef = useRef<WebSocket | undefined>(undefined);
+
   const handleIconClick = () => {
     setDialogOpen(true);
   };
@@ -225,72 +226,76 @@ const Project = () => {
         console.error(error.response?.headers);
       }
     };
+    const handleCreateComment = (sourceCardId: number) => {
+      const current = new Date();
+      const hours = String(current.getHours()).padStart(2, '0');
+      const minutes = String(current.getMinutes()).padStart(2, '0');
+      const seconds = String(current.getSeconds()).padStart(2, '0');
+      const time = `${hours}:${minutes}:${seconds}`;
   
-      const handleCreateComment=(sourceCardId:number)=>{
-        const current = new Date();
-
-        const hours = String(current.getHours()).padStart(2, '0');
-        const minutes = String(current.getMinutes()).padStart(2, '0');
-        const seconds = String(current.getSeconds()).padStart(2, '0');
-        
-        const time = `${hours}:${minutes}:${seconds}`;
-          
-        
-        console.log(time);  
-        const data={
-          
-          desc:newDesc,
-          sender:['14'],
-          card:sourceCardId,
-          time:time,
-
-        };
-        console.log("hapi");
-        axios.post('http://127.0.0.1:8000/project_app/create_comment/', data).
-        then((response)=>{
-    
-          const newComments = response.data; 
+      const data = {
+        desc: newDesc,
+        sender: ['14'],
+        card: sourceCardId,
+        time: time,
+      };
+  
+      axios
+        .post('http://127.0.0.1:8000/project_app/create_comment/', data)
+        .then((response) => {
+          const newComments = response.data;
           setComments((prevComments) => ({
             ...prevComments,
             [sourceCardId]: [...(prevComments[sourceCardId] || []), newComments],
           }));
-        })  .catch((error) => {
+  
+          if (socketRef.current) {
+            socketRef.current.send(JSON.stringify({ message: JSON.stringify(newComments) }));
+          }
+        })
+        .catch((error) => {
           console.error(error.response.data);
           console.error(error.response.headers);
         });
-       
-      
+    };
+  
+    useEffect(() => {
+      socketRef.current = new WebSocket('ws://127.0.0.1:8000/ws/project/');
+  
+      socketRef.current.onopen = () => {
+        console.log('WebSocket connection opened');
+      };
+  
+      socketRef.current.onmessage = (event) => {
+        const eventData = JSON.parse(event.data);
+        console.log('Received WebSocket message:', eventData);
+      };
+  
+      socketRef.current.onerror = (error) => {
+        console.error('WebSocket error:', error);
+      };
+  
+      socketRef.current.onclose = () => {
+        console.log('WebSocket connection closed');
+      };
+  
+      return () => {
+        if (socketRef.current) {
+          socketRef.current.close();
         }
-      //   socketRef.current=new WebSocket(
-        
-        
-      //   'ws://127.0.0.1:8000/')
-      //   socketRef.current.onopen= e => {
-      //    console.log('open',e)
-      //   }
-      //   socketRef.current.onmessage = (event) => {
-      //     const eventData = JSON.parse(event.data);
-      //     handleCreateComment(eventData.source_card_id);
-      // };
-      
-     
-      //   socketRef.current.onerror = (event) => {
-      //     console.error('WebSocket Error:', event);
-      // };
-    const handleIconClick2 = (sourceCardId:number) => {
-          axios
-            .get(`http://127.0.0.1:8000/project_app/comments/?card_id=${sourceCardId}`)
-            .then((response) => {
-              setSelectedCardComments(response.data);
-              setDialogOpen(true);
+      };
+    }, []);
+  
 
-            })
-            .catch((error) => {
-              console.error('Error fetching comments:', error);
-              console.error(error.response.data);
-              console.error(error.response.headers);
-            });
+        const handleReceivedComment = (message: string, sourceCardId: number) => {
+          const receivedComment = JSON.parse(message);
+      
+          setComments((prevComments) => ({
+            ...prevComments,
+            [sourceCardId]: [...(prevComments[sourceCardId] || []), receivedComment],
+          }));
         };
+  
     const updateListId = (sourceListId, destinationListId, cardId) => {
       axios
         .get(`http://127.0.0.1:8000/project_app/cards/${cardId}`)
@@ -322,6 +327,40 @@ const Project = () => {
         .catch((error) => {
           console.error('Error fetching card data:', error);
           
+        });
+    };
+    const handleIconClick2 = (sourceCardId: number) => {
+      const socket = new WebSocket('ws://127.0.0.1:8000/ws/project/');
+      
+      socket.onopen = () => {
+        console.log('WebSocket connection opened');
+      };
+      
+      socket.onmessage = (event) => {
+        const eventData = JSON.parse(event.data);
+        console.log('Received WebSocket message:', eventData);
+        
+        // Handle the received comment
+        handleReceivedComment(eventData.message, sourceCardId);
+      };
+      
+      socket.onerror = (error) => {
+        console.error('WebSocket error:', error);
+      };
+      
+      socket.onclose = () => {
+        console.log('WebSocket connection closed');
+      };
+  
+      // Fetch existing comments
+      axios
+        .get(`http://127.0.0.1:8000/project_app/comments/?card_id=${sourceCardId}`)
+        .then((response) => {
+          setSelectedCardComments(response.data);
+          setDialogOpen(true);
+        })
+        .catch((error) => {
+          console.error('Error fetching comments:', error);
         });
     };
     

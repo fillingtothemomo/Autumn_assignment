@@ -153,8 +153,8 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/3.2/howto/static-files/
 
 STATIC_URL = '/static/'
-WSGI_APPLICATION='pma.wsgi.application'
-
+WSGI_APPLICATION = 'pma.wsgi.application'
+# ASGI_APPLICATION = 'pma.asgi.application'
 STATICFILES_DIRS=[
     os.path.join(BASE_DIR,'reactapp/build/static')
 ]
@@ -162,3 +162,11 @@ STATICFILES_DIRS=[
 # https://docs.djangoproject.com/en/3.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+CHANNEL_LAYERS = {
+    "default": {
+        "BACKEND": "channels_redis.core.RedisChannelLayer",
+        "CONFIG": {
+            "hosts": [os.environ.get("REDIS_URL")],
+        },
+    },
+}

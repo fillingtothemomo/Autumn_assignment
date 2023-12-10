@@ -24,6 +24,7 @@ urlpatterns = [
     path('add_members/<int:project_id>/', addMember, name='add_members'),
     path('get_project_by_name/', get_project_by_name, name='get_project_by_name'),
     path('users/disable/', UserViewSet.as_view({'post': 'disable_user'}), name='disable-user'),
+    path('users/change_user_role/', UserViewSet.as_view({'post': 'change_user_role'}), name='change_user_role'),
 
 
 

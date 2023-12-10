@@ -15,9 +15,14 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path,include
+from django.urls import path, re_path
+from project_app.routing import websocket_urlpatterns
 from . import views
 from project_app.views import CardDocumentView
-
+from channels.routing import URLRouter
+from django.core.asgi import get_asgi_application
+from channels.auth import AuthMiddlewareStack
+from channels.routing import ProtocolTypeRouter, URLRouter
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('project_app/', include('project_app.urls')),
@@ -25,3 +30,11 @@ urlpatterns = [
     path('',views.index,name='index')
 
 ]
+application = ProtocolTypeRouter({
+    "http": get_asgi_application(),
+    "websocket": AuthMiddlewareStack(
+        URLRouter(
+            websocket_urlpatterns
+        )
+    ),
+})
