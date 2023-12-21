@@ -12,6 +12,7 @@ interface UserData {
   enrollment_no: string;
   email: string;
   is_admin: boolean;
+  logged_in: boolean;
 }
 
 function Home() {
@@ -24,6 +25,7 @@ function Home() {
   const handleNameChange = (event) => {
     setName(event.target.value);
   };
+
   const handleChangeUserRole = async () => {
     try {
       const response = await axios.post(
@@ -46,7 +48,7 @@ function Home() {
           enrollment_no: prevUserData?.enrollment_no || '', // Ensure that enrollment_no is defined
           email: prevUserData?.email || '', // Ensure that email is defined
         }));
-              } else {
+      } else {
         console.error(`Error changing user role: ${response.data.detail}`);
       }
     } catch (error) {
@@ -101,9 +103,16 @@ function Home() {
           },
         });
 
-        setUserData(response.data[1]);
-        setIsAdmin(response.data[1]?.is_admin || false); 
-        console.log(response.data[1]);
+        const allUserData = response.data;
+        const loggedInUser = allUserData.find((user) => user.logged_in === true);
+
+        if (loggedInUser) {
+          setUserData(loggedInUser);
+          setIsAdmin(loggedInUser.is_admin || false);
+          console.log(loggedInUser);
+        } else {
+          console.log('No user is currently logged in');
+        }
       } catch (error) {
         console.error('Error fetching user data', error);
       }
@@ -161,7 +170,7 @@ function Home() {
       {isAdmin && (
         <div className="mt-4 ml-52">
           <label className="mr-2">
-           Name:
+            Name:
             <input type="text" value={name} onChange={handleNameChange} />
           </label>
           <button className="px-3 py-2 bg-blue-500 text-white rounded" onClick={handleDisableUser}>
@@ -172,7 +181,6 @@ function Home() {
           </button>
         </div>
       )}
-    
     </div>
   );
 }

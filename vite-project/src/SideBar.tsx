@@ -45,7 +45,7 @@ const SideBar: React.FC = () => {
     const data = {
       name: newName,
       desc: newDesc,
-      members: ['14'],
+      members: ['1'],
     };
   
     axios.post('http://127.0.0.1:8000/project_app/create_project/', data)

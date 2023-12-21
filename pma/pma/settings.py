@@ -58,6 +58,7 @@ MIDDLEWARE = [
 
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
+    
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
@@ -88,12 +89,13 @@ TEMPLATES = [
 
 # Database
 # https://docs.djangoproject.com/en/3.2/ref/settings/#databases
+SESSION_ENGINE = 'django.contrib.sessions.backends.db'
 
 
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'protrack1',
+        'NAME': 'angel',
         'USER': 'root',
         'PASSWORD': 'Angel@2004',
         'HOST':'localhost',
@@ -162,11 +164,4 @@ STATICFILES_DIRS=[
 # https://docs.djangoproject.com/en/3.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
-CHANNEL_LAYERS = {
-    "default": {
-        "BACKEND": "channels_redis.core.RedisChannelLayer",
-        "CONFIG": {
-            "hosts": [os.environ.get("REDIS_URL")],
-        },
-    },
-}
+SESSION_COOKIE_AGE = 1800

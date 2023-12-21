@@ -7,7 +7,7 @@ __pycache__
 .env
 myvenv/
 venv/
-
+*node_modules/*
 # Ignore MySQL dump files
 *.sql
 

@@ -22,14 +22,18 @@ CLIENT_SECRET="SczIB8HE425u07XIDciCK2PIyL8m6YlRAAJvk6ShLcbWrWGyG3Jlt90KqYDUHbzQM
 REDIRECT_URI="http://127.0.0.1:8000/project_app/get_oauth_token/"
 
 
-def auth( name, year, email, enrolment_number):
+def auth( name,year, email, enrolment_number):
+    print("pupu")
     try:
+        print("cool")
         user = User.objects.get(name=name)
         return user
 
     except User.DoesNotExist:
-        User.objects.create(name=name, email=email,
-                            year=year, enrolment_number=enrolment_number)
+        print("slay")
+        User.objects.create(name=name, email=email,year=year
+                             ,enrollment_no=enrolment_number)
+        print("createuser")
         user = User.objects.get(name=name)
         if  year == 4:
             user.is_admin = True
@@ -47,9 +51,13 @@ def login_redirect(request):
     SITE = f'https://channeli.in/oauth/authorise/?client_id={CLIENT_ID}'
     print("haha")
     return redirect(SITE)    
+
+
 @api_view(('GET','POST'))
 def new_token(request):
     print("hello")
+    logged_in = request.user.is_authenticated
+
     AUTHORISATION_CODE = request.GET.get('code',"")
     print(AUTHORISATION_CODE)
     post_data = {
@@ -57,7 +65,7 @@ def new_token(request):
          "client_secret":CLIENT_SECRET,
          "grant_type": "authorization_code",
          "redirect_uri":REDIRECT_URI,
-       "code":AUTHORISATION_CODE   }
+         "code":AUTHORISATION_CODE,   }
     response =requests.post('https://channeli.in/open_auth/token/', post_data)
     print(response)
     ACCESS_TOKEN = response.json().get('access_token', '')
@@ -72,28 +80,35 @@ def new_token(request):
 
     response = requests.get(
         'https://channeli.in/open_auth/get_user_data/', headers=authorization_data)
-    print(response.json())
+    json_data = response.json()
+
+    print(json_data)
+
     is_member = False
-    name = response.json()['person']['fullName']
-    email = response.json()['contactInformation']['emailAddress']
-    enrollment_no=response.json()['student']['enrolmentNumber']
-    # prof_pic=response.json()['person']['displayPicture']
+    name = json_data.get('person', {}).get('fullName', '')
+    email = json_data.get('contactInformation', {}).get('emailAddress', '')
+    enrollment_no = json_data.get('student', {}).get('enrolmentNumber', '')
+    year = json_data.get('student', {}).get('currentYear', '')
+
     for role in response.json()['person']['roles']:
         if (role['role'] == "Maintainer"):
             is_member = True
 
     if is_member:
+        print(name)
+        print(email)
+        print(year)
         try:
-            user = auth(name=name, email=email, enrollment_no=enrollment_no)
+            user = auth( name=name, year=year,email=email, enrolment_number=enrollment_no)          
             print("hello")
-            
-            if user.is_disabled:
-                return Response("User account is disabled", status=status.HTTP_403_FORBIDDEN)
+            user.logged_in = logged_in
+            # if user.is_disabled:
+            #     return Response("User account is disabled", status=status.HTTP_403_FORBIDDEN)
             
             user.save()
             print(user.is_authenticated)
         except Exception as e:
-            return Response("Unable to create user")
+            return Response(e)
 
         try:
             login(request, user)
@@ -107,6 +122,9 @@ def new_token(request):
 @api_view(('GET',))
 def logout_user(request):
     if request.user.is_authenticated:
+        request.user.logged_in = False
+        request.user.save()
+
         logout(request)
         return Response("user  logged out Successfully")
     else :return Response("User already logged out")

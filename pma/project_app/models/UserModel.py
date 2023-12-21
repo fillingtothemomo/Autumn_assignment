@@ -17,6 +17,8 @@ class User(AbstractUser):
       is_admin=models.BooleanField(default=False)
       prof_pic=models.ImageField(null=True)
       is_disabled=models.BooleanField(default=False)
+      logged_in=models.BooleanField(default=False)
+
 
     
       USERNAME_FIELD = 'email'

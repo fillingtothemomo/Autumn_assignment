@@ -199,7 +199,7 @@ const Project = () => {
         const data = {
           title: newCardName,
           desc: newCardDesc,
-          assignees: ['14'],
+          assignees: ['1'],
           color: 'blue',
           lists: sourceListId,
         };
